@@ -38,27 +38,6 @@ def root():
 def health():
     return {"status": "healthy"}
 
-@app.exception_handler(Exception)
-async def unhandled_exception_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:  # pragma: no cover - simple demo handler
-    """Catch-all handler for unexpected errors.
-
-    FastAPI will still handle `HTTPException` instances and validation errors
-    separately; this is only for truly unexpected failures so API consumers
-    get a consistent 500 response body.
-    """
-
-    if isinstance(exc, HTTPException):
-        # Let FastAPI handle HTTPException as usual.
-        raise exc
-
-    return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        content={"detail": "Internal server error"},
-    )
-
-
 @app.post("/qa", response_model=QAResponse, status_code=status.HTTP_200_OK)
 async def qa_endpoint(payload: QuestionRequest) -> QAResponse:
     """Submit a question about the vector databases paper.
