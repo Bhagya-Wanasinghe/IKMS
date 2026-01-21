@@ -19,6 +19,18 @@ app = FastAPI(
     version="0.1.0",
 )
 
+@app.get("/")
+def root():
+    return {
+        "status": "ok",
+        "message": "IKMS API is running 🚀"
+    }
+
+@app.get("/health")
+def health():
+    return {"status": "healthy"}
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # In production, specify your frontend domain
