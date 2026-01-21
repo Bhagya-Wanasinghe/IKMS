@@ -8,7 +8,7 @@ from langgraph.graph import StateGraph
 
 from .agents import retrieval_node, summarization_node, verification_node
 from .state import QAState
-
+from .agents import planning_agent_node
 
 def create_qa_graph() -> Any:
     """Create and compile the linear multi-agent QA graph.
@@ -27,14 +27,20 @@ def create_qa_graph() -> Any:
     builder.add_node("retrieval", retrieval_node)
     builder.add_node("summarization", summarization_node)
     builder.add_node("verification", verification_node)
+    builder.add_node("planning", planning_agent_node)
+
+    #builder.set_entry_point("planning")
 
     # Define linear flow: START -> retrieval -> summarization -> verification -> END
-    builder.add_edge(START, "retrieval")
+    builder.add_edge(START, "planning")
+    builder.add_edge("planning", "retrieval")
     builder.add_edge("retrieval", "summarization")
     builder.add_edge("summarization", "verification")
     builder.add_edge("verification", END)
 
     return builder.compile()
+app = create_qa_graph()
+
 
 
 @lru_cache(maxsize=1)

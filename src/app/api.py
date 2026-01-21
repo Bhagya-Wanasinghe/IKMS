@@ -1,6 +1,7 @@
 from pathlib import Path
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile, status
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from .models import QuestionRequest, QAResponse
@@ -18,6 +19,13 @@ app = FastAPI(
     version="0.1.0",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, specify your frontend domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(
@@ -66,6 +74,8 @@ async def qa_endpoint(payload: QuestionRequest) -> QAResponse:
     return QAResponse(
         answer=result.get("answer", ""),
         context=result.get("context", ""),
+        plan=result.get("plan"),
+        sub_questions=result.get("sub_questions")
     )
 
 

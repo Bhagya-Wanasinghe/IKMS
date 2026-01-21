@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IKMS - Query Planning & RAG System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 30px;
+            transition: 0.4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.4s;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 1.5em;
+        }
+
+        .plan-content {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+
+        .sub-questions {
+            list-style: none;
+        }
+
+        .sub-questions li {
+            background: white;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .sub-questions li:before {
+            content: "→ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .answer-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.8;
+            font-size: 1.05em;
+        }
+
+        .flow-visualization {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .flow-step {
+            text-align: center;
+            position: relative;
+        }
+
+        .flow-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            margin: 0 auto 10px;
+        }
+
+        .flow-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .flow-arrow {
+            font-size: 30px;
+            color: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 IKMS Query Planning System</h1>
+            <p class="subtitle">Intelligent Multi-Agent RAG with Query Decomposition</p>
+        </header>
+
+        <div class="main-card">
+            <div class="input-section">
+                <label for="question">Ask a Question:</label>
+                <textarea 
+                    id="question" 
+                    placeholder="Try: What are the advantages of vector databases compared to traditional databases, and how do they handle scalability?"
+                ></textarea>
+            </div>
+
+            <div class="controls">
+                <button id="askBtn" onclick="askQuestion()">Ask Question</button>
+                
+                <div class="toggle-container">
+                    <span>Enable Planning:</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="planningToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Processing your question...</p>
+            </div>
+
+            <div id="results" class="results">
+                <div class="flow-visualization">
+                    <div class="flow-step">
+                        <div class="flow-icon">📝</div>
+                        <div class="flow-label">Question</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">🧠</div>
+                        <div class="flow-label">Planning</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">📚</div>
+                        <div class="flow-label">Retrieval</div>
+                    </div>
+                    <div class="flow-arrow">→</div>
+                    <div class="flow-step">
+                        <div class="flow-icon">💡</div>
+                        <div class="flow-label">Answer</div>
+                    </div>
+                </div>
+
+                <div class="section" id="planSection">
+                    <div class="section-title">
+                        <span class="icon">🎯</span>
+                        Search Strategy
+                    </div>
+                    <div class="plan-content" id="planContent"></div>
+                </div>
+
+                <div class="section" id="subQuestionsSection">
+                    <div class="section-title">
+                        <span class="icon">❓</span>
+                        Sub-Questions Generated
+                    </div>
+                    <ul class="sub-questions" id="subQuestionsList"></ul>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">
+                        <span class="icon">💬</span>
+                        Final Answer
+                    </div>
+                    <div class="answer-content" id="answerContent"></div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="subQCount">0</div>
+                        <div class="stat-label">Sub-Questions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="contextLength">0</div>
+                        <div class="stat-label">Context Characters</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="responseTime">0s</div>
+                        <div class="stat-label">Response Time</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8001';
+        
+        async function askQuestion() {
+            const question = document.getElementById('question').value.trim();
+            const planningEnabled = document.getElementById('planningToggle').checked;
+            
+            if (!question) {
+                alert('Please enter a question!');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('askBtn').disabled = true;
+            
+            const startTime = Date.now();
+            
+            try {
+                const response = await fetch(`${API_URL}/qa`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const endTime = Date.now();
+                const responseTime = ((endTime - startTime) / 1000).toFixed(2);
+                
+                displayResults(data, responseTime, planningEnabled);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('askBtn').disabled = false;
+            }
+        }
+        
+        function displayResults(data, responseTime, showPlanning) {
+            // Show results
+            document.getElementById('results').classList.add('active');
+            
+            // Display plan
+            if (showPlanning && data.plan) {
+                document.getElementById('planSection').style.display = 'block';
+                document.getElementById('planContent').textContent = data.plan;
+            } else {
+                document.getElementById('planSection').style.display = 'none';
+            }
+            
+            // Display sub-questions
+            if (showPlanning && data.sub_questions && data.sub_questions.length > 0) {
+                document.getElementById('subQuestionsSection').style.display = 'block';
+                const list = document.getElementById('subQuestionsList');
+                list.innerHTML = '';
+                data.sub_questions.forEach(sq => {
+                    const li = document.createElement('li');
+                    li.textContent = sq;
+                    list.appendChild(li);
+                });
+            } else {
+                document.getElementById('subQuestionsSection').style.display = 'none';
+            }
+            
+            // Display answer
+            document.getElementById('answerContent').textContent = data.answer || 'No answer generated';
+            
+            // Display stats
+            document.getElementById('subQCount').textContent = data.sub_questions ? data.sub_questions.length : 0;
+            document.getElementById('contextLength').textContent = data.context ? data.context.length : 0;
+            document.getElementById('responseTime').textContent = responseTime + 's';
+        }
+        
+        // Allow Enter key to submit
+        document.getElementById('question').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                askQuestion();
+            }
+        });
+    </script>
+</body>
+</html>
