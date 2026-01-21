@@ -61,8 +61,8 @@ def test_flow():
         return False
 
 if __name__ == "__main__":
-    if not os.getenv("Open_AI_API_KEY"):
-        print("❌ Error: Open_AI_API_KEY not set")
+    if not os.getenv("OpenAI_API_KEY"):
+        print("❌ Error: OpenAI_API_KEY not set")
         exit(1)
     
     success = test_flow()
