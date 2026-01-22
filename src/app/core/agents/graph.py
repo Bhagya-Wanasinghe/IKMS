@@ -29,8 +29,6 @@ def create_qa_graph() -> Any:
     builder.add_node("verification", verification_node)
     builder.add_node("planning", planning_agent_node)
 
-    #builder.set_entry_point("planning")
-
     # Define linear flow: START -> retrieval -> summarization -> verification -> END
     builder.add_edge(START, "planning")
     builder.add_edge("planning", "retrieval")
@@ -40,8 +38,6 @@ def create_qa_graph() -> Any:
 
     return builder.compile()
 app = create_qa_graph()
-
-
 
 @lru_cache(maxsize=1)
 def get_qa_graph() -> Any:

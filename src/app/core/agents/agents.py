@@ -12,9 +12,6 @@ from langchain_openai import ChatOpenAI
 from .state import QAState
 from ..llm.factory import create_chat_model
 
-#from ..llm.factory import create_chat_model
-#from ..llm.factory import create_chat_model
-
 from .prompts import (
     RETRIEVAL_SYSTEM_PROMPT,
     SUMMARIZATION_SYSTEM_PROMPT,
@@ -24,14 +21,12 @@ from .prompts import (
 from .state import QAState
 from .tools import retrieval_tool
 
-
 def _extract_last_ai_content(messages: List[object]) -> str:
     """Extract the content of the last AIMessage in a messages list."""
     for msg in reversed(messages):
         if isinstance(msg, AIMessage):
             return str(msg.content)
     return ""
-
 
 # Define agents at module level for reuse
 retrieval_agent = create_agent(
@@ -67,12 +62,11 @@ def create_planning_agent():
         ChatOpenAI: Configured planning agent
     """
     llm = ChatOpenAI(
-        model="gpt-3.5-turbo",  # Fast and cost-effective for planning
-        temperature=0.0  # We want consistent, logical planning
+        model="gpt-3.5-turbo",  
+        temperature=0.0  
     )
     
     return llm
-
 
 def planning_agent_node(state: dict) -> dict:
     """
@@ -178,32 +172,6 @@ def parse_planning_response(response: str) -> tuple[str, list[str]]:
     
     return plan.strip(), sub_questions
 
-
-# def retrieval_node(state: QAState) -> QAState:
-#     """Retrieval Agent node: gathers context from vector store.
-
-#     This node:
-#     - Sends the user's question to the Retrieval Agent.
-#     - The agent uses the attached retrieval tool to fetch document chunks.
-#     - Extracts the tool's content (CONTEXT string) from the ToolMessage.
-#     - Stores the consolidated context string in `state["context"]`.
-#     """
-#     question = state["question"]
-
-#     result = retrieval_agent.invoke({"messages": [HumanMessage(content=question)]})
-
-#     messages = result.get("messages", [])
-#     context = ""
-
-#     # Prefer the last ToolMessage content (from retrieval_tool)
-#     for msg in reversed(messages):
-#         if isinstance(msg, ToolMessage):
-#             context = str(msg.content)
-#             break
-
-#     return {
-#         "context": context,
-#     }
 
 def retrieval_node(state: QAState) -> dict:
     """

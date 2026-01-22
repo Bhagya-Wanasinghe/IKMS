@@ -7,7 +7,6 @@ import os
 from dotenv import load_dotenv
 from src.app.core.agents.agents import planning_agent_node
 
-# Load environment
 load_dotenv()
 
 def test_planning():

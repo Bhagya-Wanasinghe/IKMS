@@ -313,7 +313,7 @@
                 <label for="question">Ask a Question:</label>
                 <textarea 
                     id="question" 
-                    placeholder="Try: What are the advantages of vector databases compared to traditional databases, and how do they handle scalability?"
+                    placeholder="What can I help you with today?"
                 ></textarea>
             </div>
 
@@ -473,10 +473,10 @@
                 document.getElementById('subQuestionsSection').style.display = 'none';
             }
             
-            // Display answer
+            // Answer
             document.getElementById('answerContent').textContent = data.answer || 'No answer generated';
             
-            // Display stats
+            // Stats
             document.getElementById('subQCount').textContent = data.sub_questions ? data.sub_questions.length : 0;
             document.getElementById('contextLength').textContent = data.context ? data.context.length : 0;
             document.getElementById('responseTime').textContent = responseTime + 's';
