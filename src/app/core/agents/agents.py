@@ -70,15 +70,19 @@ def create_planning_agent():
 
 def planning_agent_node(state: dict) -> dict:
     """
-    Node function that executes the planning agent.
+    Executes the query planning agent.
     
-    This is what gets called in the graph.
+    This node:
+    1. Takes the user's question
+    2. Analyzes it for complexity
+    3. Generates a search strategy
+    4. Decomposes into sub-questions
     
     Args:
-        state: Current QAState
+        state: Current QAState with 'question'
         
     Returns:
-        dict: Updated state with plan and sub_questions
+        dict with 'plan' and 'sub_questions'    
     """
     # Get the user's question
     question = state["question"]
