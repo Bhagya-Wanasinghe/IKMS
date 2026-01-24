@@ -30,7 +30,7 @@ def _extract_last_ai_content(messages: List[object]) -> str:
 
 # Define agents at module level for reuse
 retrieval_agent = create_agent(
-    model=create_chat_model()   ,
+    model=create_chat_model(),
     tools=[retrieval_tool],
     system_prompt=RETRIEVAL_SYSTEM_PROMPT,
 )
@@ -46,27 +46,12 @@ verification_agent = create_agent(
     tools=[],
     system_prompt=VERIFICATION_SYSTEM_PROMPT,
 )
-
-verification_agent = create_agent(
+			
+planning_agent = create_agent(
     model=create_chat_model(),
     tools=[],
     system_prompt=PLANNING_SYSTEM_PROMPT,
 )
-
-def create_planning_agent():
-    """
-    Creates the Query Planning Agent.
-    This agent analyzes questions and creates search strategies.
-    
-    Returns:
-        ChatOpenAI: Configured planning agent
-    """
-    llm = ChatOpenAI(
-        model="gpt-3.5-turbo",  
-        temperature=0.0  
-    )
-    
-    return llm
 
 def planning_agent_node(state: dict) -> dict:
     """
@@ -86,21 +71,18 @@ def planning_agent_node(state: dict) -> dict:
     """
     # Get the user's question
     question = state["question"]
+
+    # Create message for the planning agent
+    user_content = f"Question: {question}"	 
     
-    # Create the planning agent
-    agent = create_planning_agent()
-    
-    # Create the message for the agent
-    messages = [
-        {"role": "system", "content": PLANNING_SYSTEM_PROMPT},
-        {"role": "user", "content": f"Question: {question}"}
-    ]
-    
-    # Invoke the agent
-    response = agent.invoke(messages)
-    
-    # Extract the response content
-    plan_response = response.content
+    # Invoke the planning agent
+    result = planning_agent.invoke(
+        {"messages": [HumanMessage(content=user_content)]}
+    )
+
+    # Extract response
+    messages = result.get("messages", [])
+    plan_response = _extract_last_ai_content(messages)
     
     # Parse the response to extract plan and sub-questions
     plan, sub_questions = parse_planning_response(plan_response)
@@ -111,7 +93,7 @@ def planning_agent_node(state: dict) -> dict:
     print("="*60)
     print(f"Original Question: {question}")
     print(f"\nPlan:\n{plan}")
-    print(f"\nSub-questions: {sub_questions}")
+    print(f"\nSub-questions ({len(sub_questions)}): {sub_questions}")
     print("="*60 + "\n")
     
     # Return updated state
@@ -271,7 +253,26 @@ def summarization_node(state: QAState) -> QAState:
     - Stores the draft answer in `state["draft_answer"]`.
     """
     question = state["question"]
-    context = state.get("context")
+    context = state["context"]
+
+    # Debug logging
+    print("\n" + "="*70)
+    print("📝 SUMMARIZATION NODE")
+    print("="*70)
+    print(f"Question: {question}")
+    print(f"Context available: {len(context) if context else 0} characters")
+    
+    if not context:
+        print("⚠️  WARNING: No context available!")
+        print("   This means retrieval didn't find anything.")
+        print("   Returning error message.")
+        print("="*70 + "\n")
+        return {
+            "draft_answer": "I couldn't find relevant information to answer this question. Please make sure documents are indexed in Pinecone."
+        }
+    
+    print(f"Context preview: {context[:200]}...")
+    print("="*70)
 
     user_content = f"Question: {question}\n\nContext:\n{context}"
 
@@ -280,6 +281,11 @@ def summarization_node(state: QAState) -> QAState:
     )
     messages = result.get("messages", [])
     draft_answer = _extract_last_ai_content(messages)
+ 
+    #Debug logging
+    print(f"\n✓ Generated draft answer: {len(draft_answer)} characters")
+    print(f"Draft preview: {draft_answer[:150]}...")
+    print("="*70 + "\n")
 
     return {
         "draft_answer": draft_answer,
