@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IKMS - Query Planning & RAG System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        /* Tab Navigation */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            backdrop-filter: blur(10px);
+        }
+
+        .tab-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .tab-button.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        /* Upload Section Styles */
+        .upload-section {
+            text-align: center;
+        }
+
+        .upload-area {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            margin: 20px 0;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .upload-area:hover {
+            background: #e9ecef;
+            border-color: #764ba2;
+        }
+
+        .upload-area.dragover {
+            background: #e7f3ff;
+            border-color: #667eea;
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .upload-hint {
+            font-size: 14px;
+            color: #666;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-info {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .file-info.show {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .upload-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 20px;
+        }
+
+        .upload-button:hover {
+            transform: translateY(-2px);
+        }
+
+        .upload-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .upload-status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .upload-status.show {
+            display: block;
+        }
+
+        .upload-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .upload-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .upload-status.processing {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        /* Existing QA Section Styles */
+        .input-section {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .toggle {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            border-radius: 30px;
+            transition: 0.4s;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            border-radius: 50%;
+            transition: 0.4s;
+        }
+
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .section {
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .icon {
+            font-size: 1.5em;
+        }
+
+        .plan-content {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            line-height: 1.6;
+        }
+
+        .sub-questions {
+            list-style: none;
+        }
+
+        .sub-questions li {
+            background: white;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #667eea;
+        }
+
+        .sub-questions li:before {
+            content: "→ ";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .answer-content {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            line-height: 1.8;
+            font-size: 1.05em;
+        }
+
+        .flow-visualization {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .flow-step {
+            text-align: center;
+            position: relative;
+        }
+
+        .flow-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            margin: 0 auto 10px;
+        }
+
+        .flow-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .flow-arrow {
+            font-size: 30px;
+            color: #667eea;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .progress-bar.show {
+            display: block;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+            animation: progress 2s ease-in-out infinite;
+        }
+
+        @keyframes progress {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🧠 IKMS Query Planning System</h1>
+            <p class="subtitle">Intelligent Multi-Agent RAG with Query Decomposition</p>
+        </header>
+
+        <!-- Tab Navigation -->
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('qa')">
+                💬 Ask Questions
+            </button>
+            <button class="tab-button" onclick="switchTab('upload')">
+                📄 Upload Documents
+            </button>
+        </div>
+
+        <!-- QA Tab Content -->
+        <div id="qaTab" class="tab-content active">
+            <div class="main-card">
+                <div class="input-section">
+                    <label for="question">Ask a Question:</label>
+                    <textarea 
+                        id="question" 
+                        placeholder="What can I help you with today?"
+                    ></textarea>
+                </div>
+
+                <div class="controls">
+                    <button id="askBtn" onclick="askQuestion()">Ask Question</button>
+                    
+                    <div class="toggle-container">
+                        <span>Enable Planning:</span>
+                        <label class="toggle">
+                            <input type="checkbox" id="planningToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <div id="loading" class="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <p>Processing your question...</p>
+                </div>
+
+                <div id="results" class="results">
+                    <div class="flow-visualization">
+                        <div class="flow-step">
+                            <div class="flow-icon">📝</div>
+                            <div class="flow-label">Question</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step">
+                            <div class="flow-icon">🧠</div>
+                            <div class="flow-label">Planning</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step">
+                            <div class="flow-icon">📚</div>
+                            <div class="flow-label">Retrieval</div>
+                        </div>
+                        <div class="flow-arrow">→</div>
+                        <div class="flow-step">
+                            <div class="flow-icon">💡</div>
+                            <div class="flow-label">Answer</div>
+                        </div>
+                    </div>
+
+                    <div class="section" id="planSection">
+                        <div class="section-title">
+                            <span class="icon">🎯</span>
+                            Search Strategy
+                        </div>
+                        <div class="plan-content" id="planContent"></div>
+                    </div>
+
+                    <div class="section" id="subQuestionsSection">
+                        <div class="section-title">
+                            <span class="icon">❓</span>
+                            Sub-Questions Generated
+                        </div>
+                        <ul class="sub-questions" id="subQuestionsList"></ul>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-title">
+                            <span class="icon">💬</span>
+                            Final Answer
+                        </div>
+                        <div class="answer-content" id="answerContent"></div>
+                    </div>
+
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="subQCount">0</div>
+                            <div class="stat-label">Sub-Questions</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="contextLength">0</div>
+                            <div class="stat-label">Context Characters</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="responseTime">0s</div>
+                            <div class="stat-label">Response Time</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upload Tab Content -->
+        <div id="uploadTab" class="tab-content">
+            <div class="main-card">
+                <div class="upload-section">
+                    <h2 style="margin-bottom: 20px; color: #333;">📚 Index Your Documents</h2>
+                    <p style="color: #666; margin-bottom: 30px;">
+                        Upload PDF documents to add them to the knowledge base. 
+                        Once indexed, you can ask questions about the content.
+                    </p>
+
+                    <!-- Upload Area -->
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+                        <div class="upload-icon">📄</div>
+                        <div class="upload-text">Click to select a PDF or drag & drop here</div>
+                        <div class="upload-hint">Maximum file size: 10MB</div>
+                    </div>
+
+                    <input type="file" id="fileInput" accept=".pdf" onchange="handleFileSelect(event)">
+
+                    <!-- File Info -->
+                    <div class="file-info" id="fileInfo">
+                        <div class="file-name" id="fileName"></div>
+                        <div class="file-size" id="fileSize"></div>
+                    </div>
+
+                    <!-- Upload Button -->
+                    <button class="upload-button" id="uploadBtn" onclick="uploadFile()" disabled>
+                        Upload & Index Document
+                    </button>
+
+                    <!-- Progress Bar -->
+                    <div class="progress-bar" id="progressBar">
+                        <div class="progress-fill"></div>
+                    </div>
+
+                    <!-- Upload Status -->
+                    <div class="upload-status" id="uploadStatus"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://ikms.onrender.com';
+        
+        let selectedFile = null;
+
+        // Tab Switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            if (tabName === 'qa') {
+                document.getElementById('qaTab').classList.add('active');
+                document.querySelectorAll('.tab-button')[0].classList.add('active');
+            } else if (tabName === 'upload') {
+                document.getElementById('uploadTab').classList.add('active');
+                document.querySelectorAll('.tab-button')[1].classList.add('active');
+            }
+        }
+
+        // File Upload Handlers
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (file) {
+                if (file.type !== 'application/pdf') {
+                    showUploadStatus('error', 'Please select a PDF file.');
+                    return;
+                }
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    showUploadStatus('error', 'File size must be less than 10MB.');
+                    return;
+                }
+                
+                selectedFile = file;
+                
+                // Show file info
+                document.getElementById('fileName').textContent = '📄 ' + file.name;
+                document.getElementById('fileSize').textContent = formatFileSize(file.size);
+                document.getElementById('fileInfo').classList.add('show');
+                document.getElementById('uploadBtn').disabled = false;
+                
+                // Hide status
+                document.getElementById('uploadStatus').classList.remove('show');
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
+            else return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+        }
+
+        // Drag and Drop
+        const uploadArea = document.getElementById('uploadArea');
+
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('fileInput').files = files;
+                handleFileSelect({ target: { files: files } });
+            }
+        });
+
+        async function uploadFile() {
+            if (!selectedFile) {
+                showUploadStatus('error', 'Please select a file first.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', selectedFile);
+
+            // Disable button and show progress
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('progressBar').classList.add('show');
+            showUploadStatus('processing', '⏳ Uploading and indexing document... This may take a minute.');
+
+            try {
+                const response = await fetch(`${API_URL}/index-pdf`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                // Success
+                document.getElementById('progressBar').classList.remove('show');
+                showUploadStatus('success', 
+                    `✅ Success! Document indexed successfully.\n` +
+                    `Pages: ${data.pages || 'N/A'} | Chunks: ${data.chunks || 'N/A'}\n` +
+                    `You can now ask questions about this document!`
+                );
+                
+                // Reset file input
+                selectedFile = null;
+                document.getElementById('fileInput').value = '';
+                document.getElementById('fileInfo').classList.remove('show');
+                
+                // Suggest switching to QA tab
+                setTimeout(() => {
+                    if (confirm('Document indexed! Would you like to ask questions now?')) {
+                        switchTab('qa');
+                    }
+                }, 2000);
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                document.getElementById('progressBar').classList.remove('show');
+                showUploadStatus('error', 
+                    `❌ Error uploading document: ${error.message}\n` +
+                    `Please check if the backend server is running.`
+                );
+            } finally {
+                document.getElementById('uploadBtn').disabled = false;
+            }
+        }
+
+        function showUploadStatus(type, message) {
+            const statusEl = document.getElementById('uploadStatus');
+            statusEl.className = 'upload-status show ' + type;
+            statusEl.textContent = message;
+        }
+
+        // QA Functions
+        async function askQuestion() {
+            const question = document.getElementById('question').value.trim();
+            const planningEnabled = document.getElementById('planningToggle').checked;
+            
+            if (!question) {
+                alert('Please enter a question!');
+                return;
+            }
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').classList.remove('active');
+            document.getElementById('askBtn').disabled = true;
+            
+            const startTime = Date.now();
+            
+            try {
+                const response = await fetch(`${API_URL}/qa`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ question })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                const endTime = Date.now();
+                const responseTime = ((endTime - startTime) / 1000).toFixed(2);
+                
+                displayResults(data, responseTime, planningEnabled);
+                
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message + '\n\nMake sure documents are indexed first!');
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('askBtn').disabled = false;
+            }
+        }
+        
+        function displayResults(data, responseTime, showPlanning) {
+            // Show results
+            document.getElementById('results').classList.add('active');
+            
+            // Display plan
+            if (showPlanning && data.plan) {
+                document.getElementById('planSection').style.display = 'block';
+                document.getElementById('planContent').textContent = data.plan;
+            } else {
+                document.getElementById('planSection').style.display = 'none';
+            }
+            
+            // Display sub-questions
+            if (showPlanning && data.sub_questions && data.sub_questions.length > 0) {
+                document.getElementById('subQuestionsSection').style.display = 'block';
+                const list = document.getElementById('subQuestionsList');
+                list.innerHTML = '';
+                data.sub_questions.forEach(sq => {
+                    const li = document.createElement('li');
+                    li.textContent = sq;
+                    list.appendChild(li);
+                });
+            } else {
+                document.getElementById('subQuestionsSection').style.display = 'none';
+            }
+            
+            // Display answer
+            document.getElementById('answerContent').textContent = data.answer || 'No answer generated';
+            
+            // Display stats
+            document.getElementById('subQCount').textContent = data.sub_questions ? data.sub_questions.length : 0;
+            document.getElementById('contextLength').textContent = data.context ? data.context.length : 0;
+            document.getElementById('responseTime').textContent = responseTime + 's';
+        }
+        
+        // Keyboard shortcuts
+        document.getElementById('question').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                askQuestion();
+            }
+        });
+
+        // Prevent accidental navigation
+        window.addEventListener('beforeunload', function (e) {
+            if (selectedFile) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>

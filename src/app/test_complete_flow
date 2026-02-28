@@ -1,0 +1,73 @@
+"""
+Test the complete flow: Planning → Retrieval → Summarization → Verification
+"""
+
+import os
+from dotenv import load_dotenv
+from core.agents.graph import app
+#from core.agents.graph import app
+
+load_dotenv()
+
+def test_flow():
+    """Test complete graph with planning"""
+    
+    print("="*70)
+    print("TESTING COMPLETE FLOW WITH QUERY PLANNING")
+    print("="*70)
+    
+    # Test question
+    question = "What are the advantages of vector databases compared to traditional databases?"
+    
+    print(f"\n📝 Question: {question}\n")
+    
+    # Create initial state
+    initial_state = {
+        "question": question,
+        "context": None,
+        "answer": None,
+        "plan": None,
+        "sub_questions": None
+    }
+    
+    # Run graph
+    print("Running graph...")
+    print("-"*70)
+    
+    try:
+        result = app.invoke(initial_state)
+        
+        print("result:", result)
+        print("\n" + "="*70)
+        print("FINAL RESULT")
+        print("="*70)
+        print(f"\n📋 Plan Generated:")
+        print(result.get('plan', 'No plan'))
+        print(f"\n❓ Sub-questions:")
+        for i, sq in enumerate(result.get('sub_questions', []), 1):
+            print(f"  {i}. {sq}")
+        print(f"\n📚 Context Retrieved:")
+        print(result.get('context', 'No context')[:300] + "...")
+        print(f"\n💡 Final Answer:")
+        print(result.get('answer', 'No answer'))
+        print("\n" + "="*70)
+        
+        return True
+        
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+if __name__ == "__main__":
+    if not os.getenv("OpenAI_API_KEY"):
+        print("❌ Error: OpenAI_API_KEY not set")
+        exit(1)
+    
+    success = test_flow()
+    
+    if success:
+        print("\n✓ Complete flow test PASSED!")
+    else:
+        print("\n✗ Complete flow test FAILED - check errors above")

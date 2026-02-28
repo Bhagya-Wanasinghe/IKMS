@@ -18,4 +18,6 @@ def index_pdf_file(file_path: Path) -> int:
     """
     loader = PyPDFLoader(str(file_path))
     docs = loader.load()
+
+    # Pass the loaded documents to the indexing function
     return index_documents(docs)
